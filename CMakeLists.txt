@@ -9,12 +9,14 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
+find_package(termui REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE termui::termui)
+
+find_package(cplotlib REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE cplotlib::cplotlib)
+
 find_package(nlohmann_json REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
-
-find_package(Python3 COMPONENTS Development REQUIRED)
-include_directories(${Python3_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Python3_LIBRARIES})
 
 find_package(cpr REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)

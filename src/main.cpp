@@ -1,16 +1,14 @@
-#include <format>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "info.hpp"
-#include "interfaces.hpp"
 #include "model.hpp"
+#include "nlohmann/json.hpp"
 #include "options.hpp"
 #include "plot.hpp"
 #include "rw.hpp"
-
-#include "nlohmann/json.hpp"
+#include <format>
+#include <sstream>
+#include <string>
+#include <termui/termui.hpp>
+#include <vector>
 
 std::string numeric_filter(std::string str) {
   // removes every non numeric character (0-9, '.', ',')
