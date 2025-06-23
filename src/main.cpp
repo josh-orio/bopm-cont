@@ -2,110 +2,14 @@
 #include "model.hpp"
 #include "nlohmann/json.hpp"
 #include "options.hpp"
-#include <cplotlib/plot.hpp>
 #include "rw.hpp"
+#include "utils.hpp"
+#include <cplotlib/plot.hpp>
 #include <format>
 #include <sstream>
 #include <string>
 #include <termui/termui.hpp>
 #include <vector>
-
-std::string numeric_filter(std::string str) {
-  // removes every non numeric character (0-9, '.', ',')
-  str.erase(std::remove_if(str.begin(), str.end(),
-                           [](char c) {
-                             return !std::isdigit(c) && c != '.' && c != ',';
-                           }),
-            str.end());
-
-  return str;
-}
-
-std::string fvec_to_str(std::vector<float> f) {
-  // formats vector for printing
-  std::string str;
-  for (auto i : f) {
-    str += std::format("{:.3f}", i) + ", ";
-  }
-  str = std::string(str.begin(), str.end() - 2); // remove last comma
-  return "[" + str + "]";
-}
-
-std::string fvecvec_to_str(std::vector<std::vector<float>> f) {
-  // formats 2D vector for printing
-  std::string str;
-  for (auto i : f) {
-    str += "[";
-    for (auto ii : i) {
-      str += std::format("{:.3f}", ii) + ", ";
-    }
-    str = std::string(str.begin(), str.end() - 2); // remove last comma
-
-    str += "]";
-  }
-  str = std::string(str.begin(), str.end() - 2); // remove last comma
-  return "[" + str + "]";
-}
-
-std::vector<std::string> list_dir(std::string dir) {
-  // returns all files in a dir
-  std::vector<std::string> fs;
-  for (const auto &entry : std::filesystem::directory_iterator(dir))
-    fs.push_back(entry.path());
-
-  return fs;
-}
-
-std::string print_tree(std::vector<std::vector<float>> f) {
-  // print binary trees - see 'pricing report' for usage
-  std::vector<std::vector<std::string>> transposed(
-      f.back().size(), std::vector<std::string>(f.size(), ""));
-
-  // transpose so the tree is read left to right
-  for (int i = 0; i < f.size(); i++) {
-    for (int ii = 0; ii < f[i].size(); ii++) {
-      transposed[ii * (f.back().size() / f[i].size())][i] =
-          std::format("{:.3f}", f[i][ii]);
-    }
-  }
-
-  std::string output;
-  for (int i = 0; i < transposed.size(); i++) {
-    for (int ii = 0; ii < transposed[i].size(); ii++) {
-      if (transposed[i][ii] == "") {
-        output += std::string(9, ' ');
-      } else {
-        output += transposed[i][ii] + " -> ";
-      }
-    }
-    output = std::string(output.begin(), output.end() - 4);
-    output += '\n';
-  }
-
-  return output;
-}
-
-std::string indent_linebreaks(std::string text, int indent) {
-  // accounts for indentation in block of text
-  // see the representation of greek trees in pricing report
-  std::string orig = "\n";
-  std::string replacement = '\n' + std::string(indent, ' ');
-
-  size_t pos = 0;
-  while ((pos = text.find(orig, pos)) != std::string::npos) {
-    text.replace(pos, orig.length(), replacement);
-    pos += replacement.length(); // move past the replacement
-  }
-
-  return text;
-}
-
-std::string str_toupper(std::string s) {
-  // convert a string entirely to upper case
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
-  return s;
-}
 
 int main() {
   Menu m1("Binomial Option Pricing - Joshua O'Riordan",
@@ -123,40 +27,44 @@ int main() {
         std::vector<std::string> m2opts{"Define Option", "Define Model",
                                         "Run Pricing", "Return to Main Menu"};
 
-        // if an option is declared, display its parameters on the 'Option Pricing' interface
+        // if an option is declared, display its parameters on the 'Option
+        // Pricing' interface
         if (option != nullptr) {
           m2opts[0] = "Option (select to edit) - ";
           if (option->type == Type::European) {
             m2opts[0] +=
-            std::format("({}) "
-              "Type: European, "
-              "Spot: {:.3f} {}, "
-              "Strike: {:.3f} {}, "
-              "Expiration: {:.2f}, "
-              "Side: {}",
-              option->underlying, option->spot, option->currency, option->strike, option->currency, option->expiration, side_str(option->side)
-            );
+                std::format("({}) "
+                            "Type: European, "
+                            "Spot: {:.3f} {}, "
+                            "Strike: {:.3f} {}, "
+                            "Expiration: {:.2f}, "
+                            "Side: {}",
+                            option->underlying, option->spot, option->currency,
+                            option->strike, option->currency,
+                            option->expiration, side_str(option->side));
           } else if (option->type == Type::American) {
             m2opts[0] +=
-            std::format("({}) "
-              "Type: American, "
-              "Spot: {:.3f} {}, "
-              "Strike: {:.3f} {}, "
-              "Expiration: {:.2f}, "
-              "Side: {}",
-              option->underlying, option->spot, option->currency, option->strike, option->currency, option->expiration, side_str(option->side)
-            );
+                std::format("({}) "
+                            "Type: American, "
+                            "Spot: {:.3f} {}, "
+                            "Strike: {:.3f} {}, "
+                            "Expiration: {:.2f}, "
+                            "Side: {}",
+                            option->underlying, option->spot, option->currency,
+                            option->strike, option->currency,
+                            option->expiration, side_str(option->side));
           } else if (option->type == Type::Asian) {
-            m2opts[0] +=
-            std::format("({}) "
-              "Type: European, "
-              "Spot: {:.3f} {}, "
-              "Strike: {:.3f} {}, "
-              "Expiration: {:.2f}, "
-              "Side: {}, "
-              "Strike Type: {}",
-              option->underlying, option->spot, option->currency, option->strike, option->currency, option->expiration, side_str(option->side), payoff_type_str(option->payoff_type)
-            );
+            m2opts[0] += std::format(
+                "({}) "
+                "Type: European, "
+                "Spot: {:.3f} {}, "
+                "Strike: {:.3f} {}, "
+                "Expiration: {:.2f}, "
+                "Side: {}, "
+                "Strike Type: {}",
+                option->underlying, option->spot, option->currency,
+                option->strike, option->currency, option->expiration,
+                side_str(option->side), payoff_type_str(option->payoff_type));
           }
         }
 
@@ -209,8 +117,8 @@ int main() {
 
               std::vector<std::string> opt_input = m3i.show();
 
-               // clean all numeric inputs, only 0-9, '.' and ',' allowed
-               for (int i = 2; i <= 4; i++) {
+              // clean all numeric inputs, only 0-9, '.' and ',' allowed
+              for (int i = 2; i <= 4; i++) {
                 opt_input[i] = numeric_filter(opt_input[i]);
               }
 
@@ -219,8 +127,13 @@ int main() {
               std::string cur = str_toupper(opt_input[1]);
 
               float exch_rate = 1;
-              if (cur != "" && cur != "USD") { // if currency is not default (USD)
-                if (!option || cur != option->currency) { // if option is not defined, or stored currency does not match input
+              if (cur != "" &&
+                  cur != "USD") { // if currency is not default (USD)
+                if (!option ||
+                    cur !=
+                        option
+                            ->currency) { // if option is not defined, or stored
+                                          // currency does not match input
                   // fetch currency exchange ratio
                   exch_rate = exchange_rate("USD", cur);
 
@@ -230,13 +143,12 @@ int main() {
                                    exch_rate, cur))
                       .show();
                 }
-              }
-              else {
+              } else {
                 cur = "USD"; // fill in default
               }
 
               if (opt_input[2] == "") { // if spot is empty
-                if (eqt == "") { // if equity is not defined, show error
+                if (eqt == "") {        // if equity is not defined, show error
                   Info("Input Error",
                        "'Equity' field is not defined, please fill this in to "
                        "use the automatic price fetching feature.")
@@ -244,41 +156,47 @@ int main() {
                   continue;
                 }
 
-                else { // otherwise fetch the asset price, convert currency if required
+                else { // otherwise fetch the asset price, convert currency if
+                       // required
                   float spot = current_spot(eqt) * exch_rate;
                   opt_input[2] = std::to_string(spot);
 
-                    Info ("Latest Asset Price", std::format("Fetching latest asset price...\n\n"
-                "{}: {:.3f} {}", eqt, spot, cur)).show();
+                  Info("Latest Asset Price",
+                       std::format("Fetching latest asset price...\n\n"
+                                   "{}: {:.3f} {}",
+                                   eqt, spot, cur))
+                      .show();
 
-
-                if (opt_input[3] == "") {
-                  opt_input[3] = "0"; // user may not want to fill in a strike immediately when using price fetching
-                }
+                  if (opt_input[3] == "") {
+                    opt_input[3] = "0"; // user may not want to fill in a strike
+                                        // immediately when using price fetching
+                  }
                 }
               }
 
-                if (opt_input[3] == "") {
+              if (opt_input[3] == "") {
                 Info("Input Error",
-                  "'Strike' field is not defined, please fill this in to continue.\n\n"
-                "You can enter an absolute price, or if using the automatic price fetching feature, specify strike as a ratio of spot.")
-                 .show();
-             continue;
+                     "'Strike' field is not defined, please fill this in to "
+                     "continue.\n\n"
+                     "You can enter an absolute price, or if using the "
+                     "automatic price fetching feature, specify strike as a "
+                     "ratio of spot.")
+                    .show();
+                continue;
               }
 
               if (opt_input[4] == "") {
-                Info("Input Error",
-                  "'Expiration' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Expiration' field is not defined, please "
+                                    "fill this in to continue.")
+                    .show();
+                continue;
               }
 
-
               if (opt_input[5] == "") {
-                Info("Input Error",
-                  "'Side' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Side' field is not defined, please fill "
+                                    "this in to continue.")
+                    .show();
+                continue;
               }
 
               float sp = std::stof(opt_input[2]);
@@ -327,8 +245,13 @@ int main() {
               std::string cur = str_toupper(opt_input[1]);
 
               float exch_rate = 1;
-              if (cur != "" && cur != "USD") { // if currency is not default (USD)
-                if (!option || cur != option->currency) { // if option is not defined, or stored currency does not match input
+              if (cur != "" &&
+                  cur != "USD") { // if currency is not default (USD)
+                if (!option ||
+                    cur !=
+                        option
+                            ->currency) { // if option is not defined, or stored
+                                          // currency does not match input
                   // fetch currency exchange ratio
                   exch_rate = exchange_rate("USD", cur);
 
@@ -338,21 +261,23 @@ int main() {
                                    exch_rate, cur))
                       .show();
                 }
-              }
-              else {
+              } else {
                 cur = "USD"; // fill in default
               }
 
               if (opt_input[3] == "") {
                 Info("Input Error",
-                  "'Strike' field is not defined, please fill this in to continue.\n\n"
-                "You can enter an absolute price, or if using the automatic price fetching feature, specify strike as a ratio of spot.")
-                 .show();
-             continue;
+                     "'Strike' field is not defined, please fill this in to "
+                     "continue.\n\n"
+                     "You can enter an absolute price, or if using the "
+                     "automatic price fetching feature, specify strike as a "
+                     "ratio of spot.")
+                    .show();
+                continue;
               }
 
               if (opt_input[2] == "") { // if spot is empty
-                if (eqt == "") { // if equity is not defined, show error
+                if (eqt == "") {        // if equity is not defined, show error
                   Info("Input Error",
                        "'Equity' field is not defined, please fill this in to "
                        "use the automatic price fetching feature.")
@@ -360,28 +285,31 @@ int main() {
                   continue;
                 }
 
-                else { // otherwise fetch the asset price, convert currency if required
+                else { // otherwise fetch the asset price, convert currency if
+                       // required
                   float spot = current_spot(eqt) * exch_rate;
                   opt_input[2] = std::to_string(spot);
 
-                    Info ("Latest Asset Price", std::format("Fetching latest asset price...\n\n"
-                "{}: {:.3f} {}", eqt, spot, cur)).show();
+                  Info("Latest Asset Price",
+                       std::format("Fetching latest asset price...\n\n"
+                                   "{}: {:.3f} {}",
+                                   eqt, spot, cur))
+                      .show();
                 }
               }
 
               if (opt_input[4] == "") {
-                Info("Input Error",
-                  "'Expiration' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Expiration' field is not defined, please "
+                                    "fill this in to continue.")
+                    .show();
+                continue;
               }
 
-
               if (opt_input[5] == "") {
-                Info("Input Error",
-                  "'Side' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Side' field is not defined, please fill "
+                                    "this in to continue.")
+                    .show();
+                continue;
               }
 
               float sp = std::stof(opt_input[2]);
@@ -433,8 +361,13 @@ int main() {
               std::string cur = str_toupper(opt_input[1]);
 
               float exch_rate = 1;
-              if (cur != "" && cur != "USD") { // if currency is not default (USD)
-                if (!option || cur != option->currency) { // if option is not defined, or stored currency does not match input
+              if (cur != "" &&
+                  cur != "USD") { // if currency is not default (USD)
+                if (!option ||
+                    cur !=
+                        option
+                            ->currency) { // if option is not defined, or stored
+                                          // currency does not match input
                   // fetch currency exchange ratio
                   exch_rate = exchange_rate("USD", cur);
 
@@ -444,21 +377,23 @@ int main() {
                                    exch_rate, cur))
                       .show();
                 }
-              }
-              else {
+              } else {
                 cur = "USD"; // fill in default
               }
 
               if (opt_input[3] == "") {
                 Info("Input Error",
-                  "'Strike' field is not defined, please fill this in to continue.\n\n"
-                "You can enter an absolute price, or if using the automatic price fetching feature, specify strike as a ratio of spot.")
-                 .show();
-             continue;
+                     "'Strike' field is not defined, please fill this in to "
+                     "continue.\n\n"
+                     "You can enter an absolute price, or if using the "
+                     "automatic price fetching feature, specify strike as a "
+                     "ratio of spot.")
+                    .show();
+                continue;
               }
 
               if (opt_input[2] == "") { // if spot is empty
-                if (eqt == "") { // if equity is not defined, show error
+                if (eqt == "") {        // if equity is not defined, show error
                   Info("Input Error",
                        "'Equity' field is not defined, please fill this in to "
                        "use the automatic price fetching feature.")
@@ -466,35 +401,38 @@ int main() {
                   continue;
                 }
 
-                else { // otherwise fetch the asset price, convert currency if required
+                else { // otherwise fetch the asset price, convert currency if
+                       // required
                   float spot = current_spot(eqt) * exch_rate;
                   opt_input[2] = std::to_string(spot);
 
-                    Info ("Latest Asset Price", std::format("Fetching latest asset price...\n\n"
-                "{}: {:.3f} {}", eqt, spot, cur)).show();
+                  Info("Latest Asset Price",
+                       std::format("Fetching latest asset price...\n\n"
+                                   "{}: {:.3f} {}",
+                                   eqt, spot, cur))
+                      .show();
                 }
               }
 
               if (opt_input[4] == "") {
-                Info("Input Error",
-                  "'Expiration' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Expiration' field is not defined, please "
+                                    "fill this in to continue.")
+                    .show();
+                continue;
               }
 
-
               if (opt_input[5] == "") {
-                Info("Input Error",
-                  "'Side' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Side' field is not defined, please fill "
+                                    "this in to continue.")
+                    .show();
+                continue;
               }
 
               if (opt_input[6] == "") {
-                Info("Input Error",
-                  "'Payoff Type' field is not defined, please fill this in to continue.")
-                 .show();
-             continue;
+                Info("Input Error", "'Payoff Type' field is not defined, "
+                                    "please fill this in to continue.")
+                    .show();
+                continue;
               }
 
               float sp = std::stof(opt_input[2]);
@@ -627,7 +565,8 @@ int main() {
               int s = std::stoi(mod_input[0]);
               std::vector<float> r = {}, v = {};
 
-              // splits input if it is comma seperated, or just instantiates the same value for each time step 
+              // splits input if it is comma seperated, or just instantiates the
+              // same value for each time step
               std::string r_in = mod_input[1], v_in = mod_input[2], tmp;
               if (r_in.find(',') != std::string::npos) {
                 std::stringstream ss(r_in);
@@ -697,8 +636,8 @@ int main() {
           Menu m3(
               std::format("Option Price: {:.3f} {}", price, option->currency),
               {"View Pricing Report", "Save Option to File",
-               "Save Model to File", "Show Binomial Model", "Show Delta Plot", "Show Theta Plot",
-               "Back to Option Pricing"});
+               "Save Model to File", "Show Binomial Model", "Show Delta Plot",
+               "Show Theta Plot", "Back to Option Pricing"});
 
           while (true) {
             int t3 = m3.show();
@@ -742,18 +681,17 @@ int main() {
 
               std::string delta_report =
                   indent_linebreaks(print_tree(option->delta()), 29);
-                  std::string theta_report =
-                      indent_linebreaks(print_tree(option->theta()), 29);
-                      // std::string vega_report =
-                      // indent_linebreaks(print_tree(option->vega()), 29);
+              std::string theta_report =
+                  indent_linebreaks(print_tree(option->theta()), 29);
+              // std::string vega_report =
+              // indent_linebreaks(print_tree(option->vega()), 29);
 
-              std::string greeks_report =
-                  std::format("Greeks\n"
-                              "\t{:<20} : {}\n"
-                              "\t{:<20} : {}\n"
-                              "\t{:<20} : {}\n",
-                              "Delta", delta_report, "Theta",
-                              theta_report, "Vega", "[]");
+              std::string greeks_report = std::format(
+                  "Greeks\n"
+                  "\t{:<20} : {}\n"
+                  "\t{:<20} : {}\n"
+                  "\t{:<20} : {}\n",
+                  "Delta", delta_report, "Theta", theta_report, "Vega", "[]");
 
               Info i3("Option Pricing Report",
                       pricing_report + "\n" + option_report + "\n" +
@@ -846,7 +784,7 @@ int main() {
 
               Plot(read_file("./shaders/delta.py"), data.dump()).run();
 
-            }else if (t3 == 5) /* show theta plot */ {
+            } else if (t3 == 5) /* show theta plot */ {
               std::vector<std::vector<float>> theta_tree = option->theta();
               std::vector<std::vector<float>> value_tree = {{option->spot}};
               std::vector<float> tmp;
@@ -870,7 +808,7 @@ int main() {
 
               Plot(read_file("./shaders/theta.py"), data.dump()).run();
 
-            }else if (t3 == -1) /* show vega plot */ {
+            } else if (t3 == -1) /* show vega plot */ {
               continue;
               std::vector<std::vector<float>> vega_tree = option->vega();
 
