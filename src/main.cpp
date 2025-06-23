@@ -2,7 +2,7 @@
 #include "model.hpp"
 #include "nlohmann/json.hpp"
 #include "options.hpp"
-#include "plot.hpp"
+#include <cplotlib/plot.hpp>
 #include "rw.hpp"
 #include <format>
 #include <sstream>
