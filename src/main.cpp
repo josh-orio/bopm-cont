@@ -818,30 +818,10 @@ int main() {
               data["strike"] = option->strike;
               data["v"] = value_tree;
 
-              std::string shader =
-                  "import matplotlib.pyplot as plt\n"
+              Plot(read_file("./shaders/model-tree.py"), data.dump()).run();
 
-                  "fig, ax = plt.subplots()\n"
-                  "for i in range(len(v)-1):\n"
-                  "\ttmp=[x for x in v[i] for _ in (0, 1)]\n"
-                  "\tfor ii in range(len(tmp)):\n"
-                  "\t\tax.plot([i,i+1], [tmp[ii], v[i+1][ii]], color='black', label='Price Path')\n"
-                  "\t\tax.axhline(v[i+1][ii], color='grey', linestyle='dotted', linewidth=0.5, label='Outcomes')\n"
-
-                  "ax.axhline(strike, color='red', linestyle='dashed', linewidth=0.8, label='Strike')\n"
-                  "ax.set_title('Binomial Model')\n"
-                  "ax.set_xlabel('Steps')\n"
-                  "ax.set_ylabel('Asset Price')\n"
-
-                  "handles, labels = plt.gca().get_legend_handles_labels()\n"
-                  "lgnd = dict(zip(labels, handles))\n"
-                  "ax.legend(lgnd.values(), lgnd.keys())\n"
-                  "plt.show()\n";
-
-              Plot(shader, data.dump()).run();
             } else if (t3 == 4) /* show delta plot */ {
               std::vector<std::vector<float>> delta_tree = option->delta();
-
               std::vector<std::vector<float>> value_tree = {{option->spot}};
               std::vector<float> tmp;
 
@@ -864,35 +844,10 @@ int main() {
               data["delta_tree"] = delta_tree;
               data["value_tree"] = value_tree;
 
-              std::string shader =
-                  "import matplotlib.pyplot as plt\n"
+              Plot(read_file("./shaders/delta.py"), data.dump()).run();
 
-                  "fig, ax = plt.subplots()\n"
-
-                  "x = []\n"
-                  "y = []\n"
-                  "labels = []\n"
-                  "for i in range(len(delta_tree)):\n"
-                  "\tfor ii in range(len(delta_tree[i])):\n"
-                  "\t\tx.append(i+1)\n"
-                  "\t\ty.append(value_tree[i][ii])\n"
-                  "\t\tlabels.append(delta_tree[i][ii])\n"
-
-                  "scatter = ax.scatter(x, y, c=labels, cmap='coolwarm', s=300, edgecolors='black')\n"
-                  "plt.colorbar(scatter, label='Label Value')\n"
-
-                  "for i in range(len(x)):\n"
-                  "\tax.text(x[i], y[i], f'{labels[i]:.2f}', color='black', ha='center', va='center', fontsize=8)\n"
-
-                  "ax.set_xlabel('Steps')\n"
-                  "ax.set_ylabel('Asset Value')\n"
-                  "ax.set_title('Binomial Model - Delta Plot')\n"
-                  "plt.show()\n";
-
-              Plot(shader, data.dump()).run();
             }else if (t3 == 5) /* show theta plot */ {
               std::vector<std::vector<float>> theta_tree = option->theta();
-
               std::vector<std::vector<float>> value_tree = {{option->spot}};
               std::vector<float> tmp;
 
@@ -913,32 +868,8 @@ int main() {
               data["theta_tree"] = theta_tree;
               data["value_tree"] = value_tree;
 
-              std::string shader =
-                  "import matplotlib.pyplot as plt\n"
+              Plot(read_file("./shaders/theta.py"), data.dump()).run();
 
-                  "fig, ax = plt.subplots()\n"
-
-                  "x = []\n"
-                  "y = []\n"
-                  "labels = []\n"
-                  "for i in range(len(theta_tree)):\n"
-                  "\tfor ii in range(len(theta_tree[i])):\n"
-                  "\t\tx.append(i+1)\n"
-                  "\t\ty.append(value_tree[i][ii])\n"
-                  "\t\tlabels.append(theta_tree[i][ii])\n"
-
-                  "scatter = ax.scatter(x, y, c=labels, cmap='coolwarm', s=300, edgecolors='black')\n"
-                  "plt.colorbar(scatter, label='Label Value')\n"
-
-                  "for i in range(len(x)):\n"
-                  "\tax.text(x[i], y[i], f'{labels[i]:.2f}', color='black', ha='center', va='center', fontsize=8)\n"
-
-                  "ax.set_xlabel('Steps')\n"
-                  "ax.set_ylabel('Asset Value')\n"
-                  "ax.set_title('Binomial Model - Delta Plot')\n"
-                  "plt.show()\n";
-
-              Plot(shader, data.dump()).run();
             }else if (t3 == -1) /* show vega plot */ {
               continue;
               std::vector<std::vector<float>> vega_tree = option->vega();
@@ -963,32 +894,8 @@ int main() {
               data["vega_tree"] = vega_tree;
               data["value_tree"] = value_tree;
 
-              std::string shader =
-                  "import matplotlib.pyplot as plt\n"
+              Plot(read_file("./shaders/vega.py"), data.dump()).run();
 
-                  "fig, ax = plt.subplots()\n"
-
-                  "x = []\n"
-                  "y = []\n"
-                  "labels = []\n"
-                  "for i in range(len(vega_tree)):\n"
-                  "\tfor ii in range(len(vega_tree[i])):\n"
-                  "\t\tx.append(i+1)\n"
-                  "\t\ty.append(value_tree[i][ii])\n"
-                  "\t\tlabels.append(vega_tree[i][ii])\n"
-
-                  "scatter = ax.scatter(x, y, c=labels, cmap='coolwarm', s=300, edgecolors='black')\n"
-                  "plt.colorbar(scatter, label='Label Value')\n"
-
-                  "for i in range(len(x)):\n"
-                  "\tax.text(x[i], y[i], f'{labels[i]:.2f}', color='black', ha='center', va='center', fontsize=8)\n"
-
-                  "ax.set_xlabel('Steps')\n"
-                  "ax.set_ylabel('Asset Value')\n"
-                  "ax.set_title('Binomial Model - Delta Plot')\n"
-                  "plt.show()\n";
-
-              Plot(shader, data.dump()).run();
             } else if (t3 == 6) /* back to option pricing */ {
               break;
             }
