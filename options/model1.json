@@ -1,9 +1,0 @@
-{
-  "currency": "",
-  "expiration": 1.0,
-  "side": "Call",
-  "spot": 100.0,
-  "strike": 100.0,
-  "type": "European",
-  "underlying": ""
-}
