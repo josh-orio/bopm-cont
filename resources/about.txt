@@ -1,0 +1,7 @@
+This project uses binomial trees to efficiently and flexibly price options. 
+
+Owing to the everchanging nature of financial markets, a discrete-time framework such as that implemented by the Binomial Model allows for a more precise insight into the price evolution of equities. Breaking the options’ lifespan into a series of interval, affords a user the ability to experiment with varying market conditions.
+
+In addition to the terminal based user interface, the program integrates Matplotlib, a powerful data visualization library from Python to cleanly and intuitively present information to users.
+
+To extract the true potential of binomial models, users can fetch live market data from public APIs to fit models to the real world. This project supports fetching data from FRED and Polygon.io to provide up-to-date asset prices, asset volatilities and risk-free interest rates.

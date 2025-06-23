@@ -1,0 +1,21 @@
+This manual is a shorthand reference for some controls in the User Interface.
+For an extended user manual, including how to price options and display graphs, refer to the 'User Manual' section of the README.
+
+Controls:
+NOTE: Every page will list relevant controls at the top!
+
+Up & down arrows (↑ /↓ ) are used in every interface to move between elements and content.
+
+The enter key (↵) is used to select/deselect an element of an interface (applies to Menus, Inputs & Tables).
+
+Left and right arrows (← /→ ) are used to 'finalize', which means you press them when you are 'done' with a certain interface.
+The usage of these arrows varies so check at the top of your interface which is effective.
+
+Interfaces:
+Menu - used to select between options.
+
+Input - lets you input values, use the enter key to select/deselect fields. Some fields may have pre-specified options, which will open another menu interface.
+
+Info - used to present information, such as this manual or pricing information. For long texts, users can scroll using up and down arrows.
+
+Table - used in cases where lots of data is presented, can be interactive for data entry too.
