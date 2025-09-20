@@ -1,84 +1,50 @@
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
-#include "model.hpp"
 #include "nlohmann/json.hpp"
 #include <string>
 #include <vector>
 
-enum class Side { Call, Put };
-enum class Type { European, American, Asian };
-enum class PayoffType { Fixed, Floating };
+enum class Type { Undefined = -1, European = 0, American = 1, Asian = 2 };
+enum class Side { Undefined = -1, Call = 0, Put = 1 };
+enum class PayoffType { Undefined = -1, Fixed = 0, Floating = 1 };
 
-std::string side_str(Side s);
 std::string type_str(Type t);
+std::string side_str(Side s);
 std::string payoff_type_str(PayoffType pt);
 
-namespace Option {
-class Base {
+class Option {
 public:
   std::string underlying, currency; // optional
   float spot, strike;
-  float expiration; // time until expiration
+  float expiration; // time until expiration (yrs)
   Type type;
   Side side;
+
+  Option(); // all members will be init'd as NaN or Undef, then filled in using interface
+
+  float payout(float spot); // returns payout of an option given a spot price
+
+protected:
+  Option(Type t); // used by derived classes only
+};
+class EuropeanOption : public Option {
+public:
+  EuropeanOption();
+};
+
+class AmericanOption : public Option {
+public:
+  AmericanOption();
+};
+
+class AsianOption : public Option {
+public:
   PayoffType payoff_type;
 
-  Model model;
+  AsianOption(); // payoff type init'd as Undef
 
-  virtual float price();
-  virtual float
-  payout(float spot); // returns payout of an option given a spot price
-
-  // derivatives
-  virtual std::vector<std::vector<float>> delta();
-  virtual std::vector<std::vector<float>> theta();
-  virtual std::vector<std::vector<float>> vega();
-
-  nlohmann::json to_json();
-  void from_json(nlohmann::json j);
+  float payout(std::vector<float> intervals); // payouts for asian options are dependent on asset price throughout the option lifetime
 };
-
-class European : public Base {
-public:
-  European(){};
-  European(std::string u, std::string c, float sp, float sk, float exp, Side s);
-
-  float price() override;
-
-  std::vector<std::vector<float>> delta() override;
-  std::vector<std::vector<float>> theta() override;
-  // std::vector<std::vector<float>> vega() override;
-};
-
-class American : public Base {
-public:
-  American(){};
-  American(std::string u, std::string c, float sp, float sk, float exp, Side s);
-
-  float price() override;
-
-  std::vector<std::vector<float>> delta() override;
-  std::vector<std::vector<float>> theta() override;
-  // std::vector<std::vector<float>> vega() override;
-};
-
-class Asian : public Base {
-public:
-  Asian(){};
-  Asian(std::string u, std::string c, float sp, float sk, float exp, Side s,
-        PayoffType pt);
-
-  float payout(std::vector<float>
-                   intervals); // payouts for asian options are dependent on
-                               // asset price throughout the option lifetime
-  float price() override;
-
-  std::vector<std::vector<float>> delta() override;
-  std::vector<std::vector<float>> theta() override;
-  // std::vector<std::vector<float>> vega() override;
-};
-
-} // namespace Option
 
 #endif
