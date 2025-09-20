@@ -4,10 +4,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS_RELEASE "-g")
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wuninitialized -Wno-sign-compare)
 
 find_package(termui REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE termui::termui)
